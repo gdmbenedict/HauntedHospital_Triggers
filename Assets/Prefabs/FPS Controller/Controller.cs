@@ -43,6 +43,14 @@ public class Controller : MonoBehaviour
     //bool to lock control
     private bool controlsLocked;
 
+    [Header("Walking Sounds")]
+    [SerializeField] private AudioSource playerAudio;
+    [SerializeField] private List<AudioClip> footsteps;
+    [SerializeField] private List<AudioClip> runningFootsteps;
+
+    private int footstepIndex;
+    private int runningIndex;
+
     void Awake()
     {
         Instance = this;
@@ -61,10 +69,13 @@ public class Controller : MonoBehaviour
         MainCamera.transform.localRotation = Quaternion.identity;
         m_CharacterController = GetComponent<CharacterController>();
 
-
-
         m_VerticalAngle = 0.0f;
         m_HorizontalAngle = transform.localEulerAngles.y;
+
+        footstepIndex = 0;
+        runningIndex = 0;
+
+        playerAudio.volume = 0.75f;
     }
 
     void Update()
@@ -119,6 +130,38 @@ public class Controller : MonoBehaviour
                 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
                 if (move.sqrMagnitude > 1.0f)
                     move.Normalize();
+
+                //playing movement sounds
+                if ((Input.GetAxisRaw("Horizontal") > 0f || Input.GetAxisRaw("Horizontal") < 0f || Input.GetAxisRaw("Vertical") > 0f || Input.GetAxisRaw("Vertical") < 0f) && !playerAudio.isPlaying && m_CharacterController.isGrounded)
+                {
+                    if (running)
+                    {
+                        //plays running sounds
+                        playerAudio.clip = runningFootsteps[runningIndex];
+                        playerAudio.Play();
+
+                        //gets next running sound
+                        runningIndex++;
+                        if (runningIndex >= runningFootsteps.Count)
+                        {
+                            runningIndex = 0;
+                        }
+                    }
+                    else
+                    {
+                        //plays footstep sound
+                        playerAudio.clip = footsteps[footstepIndex];
+                        playerAudio.Play();
+
+                        //chooses next footstep sound
+                        footstepIndex++;
+                        if (footstepIndex >= footsteps.Count)
+                        {
+                            footstepIndex = 0;
+                        }
+                    }
+                    
+                }
 
                 float usedSpeed = m_Grounded ? actualSpeed : m_SpeedAtJump;
 
